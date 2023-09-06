@@ -45,12 +45,16 @@
                           (defaults to '127.0.0.1:9001')
         -d hostname:port  listener port for debug processes
                           (defaults to '127.0.0.1:9000')
+        -p                parse integers from IDE key to define port
+                          through which to talk back to IDE
 
     The proxy listens on two ports, one for debugger session
     requests, and one for notifications from IDE's or other
     debugger front end tools.  This allows multiuser systems
     to provide a well defined port for debugger engines, while
-    each front end would be listening in a unique port.
+    each front end would be listening in a unique port. If unique
+    ports are to be known beforehand (e.g. for SSH tunneling)
+    then there's an option to pass the port as part of IDE key.
 
     Example usage:
         pydbgpproxy -i localhost:9001 -d localhost:9000
@@ -269,13 +273,14 @@ class clientHandler(dbgp.serverBase.listener):
         session.start(client, addr)
 
 class serverHandler(dbgp.serverBase.listener):
-    def __init__(self, manager, addr='127.0.0.1', port=9001, caddr='127.0.0.1', cport=9000):
+    def __init__(self, manager, addr='127.0.0.1', port=9001, caddr='127.0.0.1', cport=9000, server_port_from_idekey=False):
         self.manager = manager
         self.caddr = caddr
         self.cport = cport
         dbgp.serverBase.listener.__init__(self, self)
         self._addr = addr
         self._port = port
+        self._server_port_from_idekey = server_port_from_idekey
         
     def start(self):
         dbgp.serverBase.listener.start(self, self._addr, self._port)
@@ -335,7 +340,11 @@ class serverHandler(dbgp.serverBase.listener):
         if not idekey or not port:
             self._error(client,addr,'proxyinit','No port defined for proxy')
             return
-        addr = [addr[0],port]
+
+        addr = [addr[0], port]
+        if self._server_port_from_idekey:
+            addr = [addr[0], int(''.join(char for char in idekey if char.isdigit()))]
+
         id = self.manager.addServer(idekey, addr, multi)
         if id:
             msg = u'<?xml version="1.0" encoding="UTF-8"?>\n<proxyinit success="1" idekey="%s" address="%s" port="%d"/>' %(id, self.caddr, self.cport)
@@ -364,13 +373,14 @@ class proxy:
     _servers = {}
     
     def __init__(self, caddr='127.0.0.1', cport=9000,
-                       saddr='127.0.0.1', sport=9001):
+                       saddr='127.0.0.1', sport=9001,
+                       server_port_from_idekey = False):
         log.info("starting proxy listeners.  appid: %d", os.getpid())
         log.info("    dbgp listener on %s:%d", caddr, cport)
         log.info("    IDE listener on  %s:%d", saddr, sport)
         self._clientListener = clientHandler(self, caddr, cport)
-        self._serverListener = serverHandler(self, saddr, sport, caddr, cport)
-    
+        self._serverListener = serverHandler(self, saddr, sport, caddr, cport, server_port_from_idekey)
+
     def addServer(self, idekey, addr, multi):
         if self._servers.has_key(idekey):
             return None
@@ -477,6 +487,7 @@ def main(argv):
     dbgport = 9000
     ideport = 9001
     logLevel = logging.INFO
+    server_port_from_idekey = False
 
     for opt, optarg in optlist:
         if optarg:
@@ -507,6 +518,8 @@ def main(argv):
             else:
                 idehost = '127.0.0.1'
                 ideport = int(optarg)
+        elif opt in ('-p', '--ide-key-port'):
+            server_port_from_idekey = True
         elif opt in ('-l', '--log_level'):
             level_names = dict([ (logging.getLevelName(lvl), lvl) for lvl in
                                  range(logging.NOTSET, logging.CRITICAL+1, 10) ])
@@ -523,7 +536,7 @@ def main(argv):
     configureLogging(log, logLevel)
     configureLogging(dbgp.serverBase.log, logLevel)
     try:
-        proxy(dbghost, dbgport, idehost, ideport).waitForever()
+        proxy(dbghost, dbgport, idehost, ideport, server_port_from_idekey).waitForever()
     except Exception, e:
         log.exception(e)
         # Some exceptions will lock the console, such as an error to

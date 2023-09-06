@@ -1,17 +1,20 @@
 # pydbgpproxy
 
+This is [DBGp](https://xdebug.org/docs/dbgp)-compatible proxy (like [dbgpProxy](https://xdebug.org/docs/dbgpProxy))
+that can be used to allow multi-user debugging. This fork adds `-p|--ide-key-port` option to select IDE talk-back port
+from IDE key instead of picking it randomly, which solves SSH tunneling issues.
+
 ## Install
 
-* cd /opt
 * mkdir pydbgpproxy
 * cd pydbgpproxy
-* wget https://github.com/Mirocow/pydbgpproxy/archive/master.zip ./
+* wget https://github.com/eduard-sukharev/pydbgpproxy-idekey-port/archive/master.zip ./
 * unzip master.zip ./
 * ln -s $(pwd)/pydbgpproxy /usr/local/bin/pydbgpproxy
 
-## Errors
+## Troubleshooting
 
-if you have such mistake
+If you encounter following error:
 
 ```
 Traceback (most recent call last):
@@ -20,8 +23,8 @@ Traceback (most recent call last):
 ImportError: No module named dbgp.serverBase
 ```
 
-you can fixed it
+then append `pythonlib` dir to your `PYTHONPATH` env variable:  
 
 ``` sh
-echo "export PYTHONPATH=\${PYTHONPATH}:/opt/bin/pydbgpproxy/pythonlib" » ~/.bashrc
+echo "export PYTHONPATH=\${PYTHONPATH}:${PWD}/pydbgpproxy/pythonlib" >> ~/.bashrc
 ```
