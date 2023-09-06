@@ -345,6 +345,8 @@ class serverHandler(dbgp.serverBase.listener):
         if self._server_port_from_idekey:
             addr = [addr[0], int(''.join(char for char in idekey if char.isdigit()))]
 
+        log.info("Server talk-back address: %s", addr)
+
         id = self.manager.addServer(idekey, addr, multi)
         if id:
             msg = u'<?xml version="1.0" encoding="UTF-8"?>\n<proxyinit success="1" idekey="%s" address="%s" port="%d"/>' %(id, self.caddr, self.cport)
