@@ -6,10 +6,10 @@ from IDE key instead of picking it randomly, which solves SSH tunneling issues.
 
 ## Install
 
-* mkdir pydbgpproxy
-* cd pydbgpproxy
+* cd /opt
 * wget https://github.com/eduard-sukharev/pydbgpproxy-idekey-port/archive/master.zip ./
-* unzip master.zip ./
+* unzip master.zip -d
+* mv pydbgpproxy-idekey-port-master pydbgpproxy
 * ln -s $(pwd)/pydbgpproxy /usr/local/bin/pydbgpproxy
 
 ## Troubleshooting

@@ -475,8 +475,8 @@ def main(argv):
         sys.exit(1)
     
     try:
-        optlist, args = getopt.getopt(argv[1:], 'hVd:l:i:',
-            ['help', 'version', 'debug_port',
+        optlist, args = getopt.getopt(argv[1:], 'hpVd:l:i:',
+            ['help', 'ide-key-port', 'version', 'debug_port',
              'log_level', 'ide_port'])
     except getopt.GetoptError, msg:
         sys.stderr.write("proxy: error: %s\n" % str(msg))
